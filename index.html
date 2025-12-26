@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Meine PSN Bibliothek</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .game-card { margin: 8px 0; padding:8px; border:1px solid #ddd; border-radius:6px }
+    .score-bar { height:8px; margin-top:6px; border-radius:4px }
+  </style>
 </head>
 <body>
 
@@ -42,6 +47,10 @@
 
 <hr>
 <h2>📚 Bibliothek</h2>
+<div>
+  <button id="sortScore">Sortiere nach Score</button>
+  <button id="sortName">Sortiere nach Name</button>
+</div>
 <ul id="library"></ul>
 
 <script src="main.js"></script>

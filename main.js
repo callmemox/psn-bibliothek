@@ -1,4 +1,6 @@
 const libraryEl = document.getElementById("library");
+const sortScoreBtn = document.getElementById("sortScore");
+const sortNameBtn = document.getElementById("sortName");
 
 // PSN-Profil
 const psnInput = document.getElementById("psn");
@@ -36,7 +38,7 @@ document.getElementById("addGame").onclick = () => {
     document.getElementById("overall").value
   ].map(Number);
 
-  if (values.some(v => v < 1 || v > 10)) return;
+  if (values.some(v => v < 1 || v > 10 || Number.isNaN(v))) return;
 
   const score = (values.reduce((a,b) => a + b, 0) / values.length).toFixed(2);
 
@@ -52,15 +54,27 @@ document.getElementById("addGame").onclick = () => {
   render();
 };
 
-function render() {
+function render(sortBy = "score") {
   libraryEl.innerHTML = "";
-  games
-    .sort((a,b) => b.score - a.score)
-    .forEach((g,i) => {
-      const li = document.createElement("li");
-      li.textContent = `${i+1}. ${g.name} (${g.platform}) – ${g.status} – ${g.score}/10`;
-      libraryEl.appendChild(li);
-    });
+  let sortedGames = [...games];
+
+  if (sortBy === "score") sortedGames.sort((a,b) => b.score - a.score);
+  if (sortBy === "name") sortedGames.sort((a,b) => a.name.localeCompare(b.name));
+
+  sortedGames.forEach((g,i) => {
+    const li = document.createElement("li");
+    li.className = "game-card";
+    li.innerHTML = `
+      <strong>${i+1}. ${g.name}</strong> (${g.platform})<br>
+      Status: ${g.status} | Score: ${g.score}/10
+      <div class="score-bar" style="width:${g.score*10}%; background:#1db954;"></div>
+    `;
+    libraryEl.appendChild(li);
+  });
 }
 
 render();
+
+// Sortier-Buttons
+if (sortScoreBtn) sortScoreBtn.onclick = () => render("score");
+if (sortNameBtn) sortNameBtn.onclick = () => render("name");
