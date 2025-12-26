@@ -6,7 +6,8 @@
     "start": "node serve.js",
     "test": "jest",
     "lint": "eslint . --ext .js",
-    "ci": "npm run lint && npm test"
+    "ci": "npm run lint && npm test",
+    "update-catalog": "node scripts/update_catalog.js"
   },
   "devDependencies": {
     "eslint": "^8.0.0",
