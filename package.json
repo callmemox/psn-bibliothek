@@ -1,0 +1,14 @@
+{
+  "name": "psn-bibliothek",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint . --ext .js",
+    "ci": "npm run lint && npm test"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0"
+  }
+}
