@@ -46,15 +46,31 @@ http.createServer(async (req, res) => {
       // crude parsing: find links that reference /trophies/ or /game/ and capture the link text
       const re = /<a[^>]+href=["']([^"']*(?:trophies|game)[^"']*)["'][^>]*>([^<]+)<\/a>/gi;
       const names = [];
+      const hrefs = [];
       let m;
       while ((m = re.exec(html)) !== null) {
+        const href = m[1];
         const name = m[2].trim();
-        if (name && !names.includes(name)) names.push(name);
+        if (name && !names.includes(name)) {
+          names.push(name);
+          hrefs.push(href);
+        }
       }
 
-      cache.set(cacheKey, { ts: Date.now(), data: names });
+      // collect image sources on the page and try to map to found names by proximity/index
+      const imgRe = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+      const imgs = [];
+      let im;
+      while ((im = imgRe.exec(html)) !== null) {
+        imgs.push(im[1]);
+      }
+
+      // build objects with optional image
+      const items = names.map((n, idx) => ({ name: n, href: hrefs[idx] || null, image: imgs[idx] || null }));
+
+      cache.set(cacheKey, { ts: Date.now(), data: items });
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ user, games: names }));
+      return res.end(JSON.stringify({ user, games: items }));
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: err.message }));

@@ -154,10 +154,26 @@ if(importPsnBtn){
       if(found.length === 0){ alert('Keine Spiele gefunden oder Profil privat/leer.'); }
       // add each found game to local library with default score 0.00 and status 'Importiert'
       let added = 0;
-      for(const gname of found){
+      for(const item of found){
+        const gname = (typeof item === 'string') ? item : (item.name || '');
+        if(!gname) continue;
         // avoid duplicates by name
         if(games.some(x => x.name.toLowerCase() === gname.toLowerCase())) continue;
-        const game = { name: gname, platform: 'PSN', status: 'Importiert', score: '0.00' };
+        const game = { name: gname, platform: 'PSN', status: 'Importiert', score: '0.00', image: (item.image || null) };
+
+        // try to find a better image from local catalog
+        try{
+          if(window && window.fetch) {
+            // use already-loaded gamesCatalog if available
+            if(typeof gamesCatalog === 'object' && Array.isArray(gamesCatalog)){
+              const match = gamesCatalog.find(c => c.name && c.name.toLowerCase() === gname.toLowerCase());
+              if(match && match.image) game.image = match.image;
+            }
+          }
+        }catch(e){
+          // ignore catalog lookup errors
+        }
+
         games.push(game);
         added++;
       }
@@ -166,6 +182,17 @@ if(importPsnBtn){
         render();
       }
       alert(`Import abgeschlossen. ${found.length} Spiele gefunden, ${added} hinzugefügt.`);
+      // if any added, set background to last added game's image if available
+      const last = games[games.length-1];
+      if(last){
+        if(last.image) {
+          // set as body background directly
+          const body = document.body;
+          body.style.backgroundImage = `url('${last.image}')`;
+        } else {
+          setGameBackground(last.name);
+        }
+      }
     }catch(err){
       alert('Fehler beim Import: '+err.message);
     }finally{
