@@ -5,7 +5,9 @@
   <title>Meine PSN Bibliothek</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; margin:0; min-height:100vh;
-      background: url('assets/bg.jpg') center/cover no-repeat fixed;
+      background-color: #000; /* start with black background */
+      background-size: cover;
+      background-position: center;
       color: #fff;
     }
     /* Dim the image for readability */
@@ -15,10 +17,12 @@
       inset: 0;
       background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.35));
       pointer-events: none;
-      z-index: 0;
+      z-index: 1; /* above canvas, below content */
     }
     /* Keep app content above overlay */
     body > * { position: relative; z-index: 1 }
+    /* Canvas background should sit under the overlay */
+    #bgCanvas { position: fixed; inset: 0; width:100%; height:100%; z-index: 0; pointer-events: none; }
     .game-card { margin: 8px 0; padding:12px; border-radius:8px; background: rgba(255,255,255,0.04); }
     .score-bar { height:8px; margin-top:6px; border-radius:4px }
   </style>

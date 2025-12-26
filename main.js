@@ -24,6 +24,32 @@ function showPsn(name) {
 // Spielebibliothek
 let games = JSON.parse(localStorage.getItem("games")) || [];
 
+// Background handling: start black, switch to game-specific image when a game is added
+function setGameBackground(name){
+  const body = document.body;
+  if(!name){
+    body.style.backgroundImage = '';
+    return;
+  }
+  const query = encodeURIComponent(name + ' video game');
+  const url = `https://source.unsplash.com/1600x900/?${query}`;
+  // preload to avoid flicker
+  const img = new Image();
+  img.onload = () => {
+    body.style.backgroundImage = `url('${img.src}')`;
+  };
+  img.onerror = () => {
+    // fallback: clear background
+    body.style.backgroundImage = '';
+  };
+  img.src = url;
+}
+
+// if we already have games saved, show background for the last one
+if(games.length > 0){
+  setGameBackground(games[games.length-1].name);
+}
+
 document.getElementById("addGame").onclick = () => {
   const name = document.getElementById("gameName").value.trim();
   if (!name) return;
@@ -51,6 +77,7 @@ document.getElementById("addGame").onclick = () => {
 
   games.push(game);
   localStorage.setItem("games", JSON.stringify(games));
+  setGameBackground(name);
   render();
 };
 
