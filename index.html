@@ -25,6 +25,9 @@
     #bgCanvas { position: fixed; inset: 0; width:100%; height:100%; z-index: 0; pointer-events: none; }
     .game-card { margin: 8px 0; padding:12px; border-radius:8px; background: rgba(255,255,255,0.04); }
     .score-bar { height:8px; margin-top:6px; border-radius:4px }
+    .suggestions { position: absolute; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.08); max-width: 420px; width:100%; margin-top:6px; border-radius:6px; overflow:hidden; z-index: 5 }
+    .suggestion-item { padding:8px 10px; cursor:pointer; color:#fff; }
+    .suggestion-item[aria-selected="true"], .suggestion-item:hover { background: rgba(255,255,255,0.06); }
   </style>
 </head>
 <body>
@@ -41,7 +44,10 @@
 <hr>
 
 <h2>Spiel hinzufügen</h2>
-<input id="gameName" placeholder="Spielname">
+<div style="position:relative; max-width:420px;">
+  <input id="gameName" placeholder="Spielname" autocomplete="off">
+  <div id="suggestions" class="suggestions" role="listbox" aria-label="Vorschläge"></div>
+</div>
 <select id="platform">
   <option>PS5</option>
   <option>PS4</option>

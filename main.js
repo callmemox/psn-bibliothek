@@ -1,4 +1,114 @@
 const libraryEl = document.getElementById("library");
+// Simple in-memory game suggestions list (can be replaced with an API later)
+const gamesDB = [
+  "The Last of Us",
+  "The Last of Us Part II",
+  "God of War",
+  "Uncharted",
+  "Horizon Zero Dawn",
+  "Elden Ring",
+  "The Legend of Zelda: Breath of the Wild",
+  "Halo Infinite",
+  "Call of Duty",
+  "Final Fantasy VII",
+  "Persona 5",
+  "Resident Evil 2",
+  "Resident Evil 4",
+  "Dark Souls",
+  "Bloodborne",
+  "Cyberpunk 2077",
+  "Spider-Man",
+  "Spider-Man: Miles Morales",
+  "Red Dead Redemption 2",
+  "GTA V",
+  "Sekiro",
+  "Skyrim",
+  "Fallout 4",
+  "Mass Effect",
+  "Doom Eternal",
+  "Overwatch",
+  "Minecraft",
+  "Fortnite",
+  "Among Us",
+  "Stardew Valley",
+  "Portal 2",
+  "Half-Life 2",
+  "Mario Kart 8",
+  "Super Mario Odyssey",
+  "Metroid Dread",
+  "Animal Crossing",
+  "Cuphead",
+  "Dead Cells",
+  "Celeste",
+  "Ori and the Will of the Wisps",
+  "Divinity: Original Sin 2",
+  "Disco Elysium",
+  "The Witcher 3",
+  "Nier: Automata",
+  "Shadow of the Colossus",
+  "Sifu",
+  "Returnal"
+];
+
+// Autocomplete UI state
+let suggestionIndex = -1;
+const suggestionsEl = document.getElementById('suggestions');
+const gameNameInput = document.getElementById('gameName');
+
+function clearSuggestions(){
+  suggestionIndex = -1;
+  if(suggestionsEl) suggestionsEl.innerHTML = '';
+}
+
+function selectSuggestion(name){
+  if(gameNameInput) gameNameInput.value = name;
+  clearSuggestions();
+}
+
+function showSuggestions(q){
+  if(!suggestionsEl) return;
+  const v = (q||'').trim().toLowerCase();
+  if(!v){ clearSuggestions(); return; }
+  const matches = gamesDB.filter(g => g.toLowerCase().includes(v)).slice(0,7);
+  if(matches.length === 0){ clearSuggestions(); return; }
+  suggestionsEl.innerHTML = '';
+  matches.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.className = 'suggestion-item';
+    div.setAttribute('role','option');
+    div.setAttribute('data-name', m);
+    div.textContent = m;
+    div.onclick = () => selectSuggestion(m);
+    suggestionsEl.appendChild(div);
+  });
+}
+
+if(gameNameInput){
+  gameNameInput.addEventListener('input', (e)=> showSuggestions(e.target.value));
+  gameNameInput.addEventListener('keydown', (e)=>{
+    const items = suggestionsEl ? Array.from(suggestionsEl.children) : [];
+    if(e.key === 'ArrowDown'){
+      suggestionIndex = Math.min(items.length-1, suggestionIndex+1);
+      items.forEach((it,idx)=> it.setAttribute('aria-selected', idx===suggestionIndex));
+      e.preventDefault();
+    } else if(e.key === 'ArrowUp'){
+      suggestionIndex = Math.max(0, suggestionIndex-1);
+      items.forEach((it,idx)=> it.setAttribute('aria-selected', idx===suggestionIndex));
+      e.preventDefault();
+    } else if(e.key === 'Enter'){
+      if(suggestionIndex >=0 && items[suggestionIndex]){
+        selectSuggestion(items[suggestionIndex].dataset.name);
+        e.preventDefault();
+      }
+    } else if(e.key === 'Escape'){
+      clearSuggestions();
+    }
+  });
+  document.addEventListener('click', (ev)=>{
+    if(!ev.target.closest || !gameNameInput) return;
+    if(ev.target !== gameNameInput && !ev.target.closest('#suggestions')) clearSuggestions();
+  });
+}
 const sortScoreBtn = document.getElementById("sortScore");
 const sortNameBtn = document.getElementById("sortName");
 
