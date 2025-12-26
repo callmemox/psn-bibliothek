@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Meine PSN Bibliothek</title>
+</head>
+<body>
+
+<h1>🎮 Meine PSN Bibliothek</h1>
+
+<h2>PSN-Profil</h2>
+<input id="psn" placeholder="PSN-Name">
+<button id="savePsn">Speichern</button>
+<p id="psnInfo"></p>
+
+<hr>
+
+<h2>Spiel hinzufügen</h2>
+<input id="gameName" placeholder="Spielname">
+<select id="platform">
+  <option>PS5</option>
+  <option>PS4</option>
+  <option>PS3</option>
+</select>
+<select id="status">
+  <option>Durchgespielt</option>
+  <option>Angefangen</option>
+  <option>Abgebrochen</option>
+</select>
+
+<h3>Bewertung (1–10)</h3>
+<input id="story" type="number" min="1" max="10" placeholder="Story">
+<input id="characters" type="number" min="1" max="10" placeholder="Charaktere">
+<input id="gameplay" type="number" min="1" max="10" placeholder="Gameplay">
+<input id="art" type="number" min="1" max="10" placeholder="Artwork">
+<input id="sound" type="number" min="1" max="10" placeholder="Sound">
+<input id="twist" type="number" min="1" max="10" placeholder="Plottwists">
+<input id="overall" type="number" min="1" max="10" placeholder="Gesamteindruck">
+
+<br><br>
+<button id="addGame">Spiel speichern</button>
+
+<hr>
+<h2>📚 Bibliothek</h2>
+<ul id="library"></ul>
+
+<script src="main.js"></script>
+</body>
+</html>
