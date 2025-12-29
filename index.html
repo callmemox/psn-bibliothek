@@ -5,29 +5,28 @@
   <title>Meine PSN Bibliothek</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; margin:0; min-height:100vh;
-      background-color: #000; /* start with black background */
+      background-color: #000;
       background-size: cover;
       background-position: center;
       color: #fff;
     }
-    /* Dim the image for readability */
     body::before{
       content: "";
       position: fixed;
       inset: 0;
       background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.35));
       pointer-events: none;
-      z-index: 0; /* above canvas but below content */
+      z-index: 0;
     }
-    /* Keep app content above overlay */
     body > * { position: relative; z-index: 1 }
-    /* Canvas background should sit under the overlay */
     #bgCanvas { position: fixed; inset: 0; width:100%; height:100%; z-index: -1; pointer-events: none; }
     .game-card { margin: 8px 0; padding:12px; border-radius:8px; background: rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.06); color: #fff }
     .score-bar { height:8px; margin-top:6px; border-radius:4px }
     .suggestions { position: absolute; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.08); max-width: 420px; width:100%; margin-top:6px; border-radius:6px; overflow:hidden; z-index: 5 }
     .suggestion-item { padding:8px 10px; cursor:pointer; color:#fff; }
     .suggestion-item[aria-selected="true"], .suggestion-item:hover { background: rgba(255,255,255,0.06); }
+    #library { list-style:none; padding:0; margin:0; display:flex; gap:10px; flex-wrap:wrap }
+    #library .game-card { width:220px }
   </style>
 </head>
 <body>
@@ -77,10 +76,67 @@
 <div>
   <button id="sortScore">Sortiere nach Score</button>
   <button id="sortName">Sortiere nach Name</button>
+  <button id="loadPlayStationCatalog">PS-Katalog laden</button>
 </div>
 <ul id="library"></ul>
+
+<hr>
+<h3>Optionaler JSON-Import</h3>
+<input type="file" id="importFile" accept=".json">
+<button id="importBtn">📥 Importieren</button>
 
 <script src="animate-bg.js" defer></script>
 <script src="main.js"></script>
 </body>
 </html>
+<button id="saveGame">Spiel speichern</button>
+<button id="loadGame">Spiel laden</button>
+window.onload = () => {
+  document.getElementById("saveGame").onclick = saveGame;
+};
+function saveGame() {
+  const gameData = {
+    title: "Beispielspiel",
+    platform: "PS5",
+    status: "Durchgespielt",
+    scores: {
+      story: 8,
+      characters: 9,
+      gameplay: 7,
+      art: 8,
+      sound: 9,
+      twist: 6,
+      overall: 8
+    }
+  };
+  localStorage.setItem("myGame", JSON.stringify(gameData));
+  alert("Spiel gespeichert!");
+}function saveGame() {
+  const name = document.getElementById("gameSearch").value.trim();
+
+  if (!name) {
+    alert("Kein Spielname");
+    return;
+  }
+
+  games.push({
+    name,
+    score: 0,
+    cover: ""
+  });
+
+  localStorage.setItem("games", JSON.stringify(games));
+  render();
+
+  console.log("Spiel gespeichert:", name);
+}
+function loadGame() {
+  const savedGame = localStorage.getItem("myGame");
+  if (savedGame) {
+    const gameData = JSON.parse(savedGame);
+    console.log("Geladenes Spiel:", gameData);
+    alert(`Geladenes Spiel: ${gameData.title}`);
+  } else {
+    alert("Kein gespeichertes Spiel gefunden.");
+  }
+}

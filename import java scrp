@@ -1,0 +1,66 @@
+/import/import.js
+<h2>PSNProfiles Import</h2>
+
+<textarea id="importText" placeholder="Spiele hier einfügen (ein Spiel pro Zeile)"
+style="width:100%;height:200px;"></textarea>
+
+<button id="importBtn">Importieren</button>
+let games = JSON.parse(localStorage.getItem("games")) || [];
+
+document.getElementById("importBtn").onclick = () => {
+  const text = document.getElementById("importText").value.trim();
+  if (!text) return alert("Keine Spiele eingefügt");
+
+  const names = text
+    .split("\n")
+    .map(n => n.trim())
+    .filter(n => n.length > 1);
+
+  let added = 0;
+
+  names.forEach(name => {
+    if (!games.find(g => g.name.toLowerCase() === name.toLowerCase())) {
+      games.push({
+        name,
+        score: 0,
+        characters: 0,
+        story: 0,
+        gameplay: 0,
+        artwork: 0,
+        plottwist: 0,
+        cover: ""
+      });
+      added++;
+    }
+  });
+
+  localStorage.setItem("games", JSON.stringify(games));
+  renderGames();
+
+  alert(`${added} Spiele importiert`);
+};
+
+function renderGames() {
+  const list = document.getElementById("gameList");
+  list.innerHTML = "";
+
+  games.forEach((g, i) => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <strong>${g.name}</strong>
+      <button onclick="deleteGame(${i})">🗑</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+    alert("Kein gespeichertes Spiel gefunden.");
+  }
+}<div id="gameList"></div>
+document.getElementById("loadGame").onclick = loadGame;
+function deleteGame(index) {
+  if (!confirm("Spiel löschen?")) return;
+  games.splice(index, 1);
+  localStorage.setItem("games", JSON.stringify(games));
+  renderGames();
+}

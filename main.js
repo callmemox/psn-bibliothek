@@ -290,3 +290,85 @@ render();
 // Sortier-Buttons
 if (sortScoreBtn) sortScoreBtn.onclick = () => render("score");
 if (sortNameBtn) sortNameBtn.onclick = () => render("name");
+async function fetchAllPlayStationGames(page = 1) {
+  const url = `https://api.rawg.io/api/games?key=DEIN_RAWG_API_KEY&platforms=18,187&page_size=40&page=${page}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.results; // Liste von Spielen
+}
+fetchAllPlayStationGames().then(games => {
+  console.log("Gefundene PlayStation-Spiele:", games);
+}
+});
+
+async function loadPlayStationCatalog() {
+  const psGames = await fetchAllPlayStationGames();
+  const list = document.getElementById("library");
+  if (!list) return;
+  list.innerHTML = "";
+
+  psGames.forEach(game => {
+    const li = document.createElement("li");
+    li.className = "game-card";
+    li.innerHTML = `
+      ${game.background_image ? `<img src="${game.background_image}" style="width:100%; border-radius:8px">` : ""}
+      <strong>${game.name}</strong>
+    `;
+    list.appendChild(li);
+  });
+}
+
+// If you want a button in the DOM to trigger loading the catalog, add
+// <button id="loadPlayStationCatalog">PS-Katalog laden</button> to index.html
+const loadPsnCatalogBtn = document.getElementById('loadPlayStationCatalog');
+if (loadPsnCatalogBtn) loadPsnCatalogBtn.addEventListener('click', loadPlayStationCatalog);
+function render(sortBy = "score") {
+  libraryEl.innerHTML = "";
+
+  let sorted = [...games];
+  if (sortBy === "score") sorted.sort((a,b) => b.score - a.score);
+  if (sortBy === "name") sorted.sort((a,b) => a.name.localeCompare(b.name));
+
+  sorted.forEach((game) => {
+    const realIndex = games.findIndex(g => g.name === game.name);
+
+    const li = document.createElement("li");
+    li.className = "game-card";
+
+    li.innerHTML = `
+      ${game.cover ? `<img src="${game.cover}" style="width:100%; border-radius:8px;">` : ""}
+      <strong>${game.name}</strong><br>
+      Score: ${game.score}/10
+      <button class="delete-btn">🗑 Löschen</button>
+    `;
+
+    li.querySelector(".delete-btn").onclick = () => {
+      games.splice(realIndex, 1);                 // NUR dieses Spiel
+      localStorage.setItem("games", JSON.stringify(games));
+      render(sortBy);
+    };
+
+    libraryEl.appendChild(li);
+  });
+}
+const realIndex = games.findIndex(...)
+if (!confirm("Spiel wirklich löschen?")) return;
+
+javascript:(()=>{
+  const games = [...document.querySelectorAll('a')];
+  const names = games
+    .map(a => a.textContent.trim())
+    .filter(t => t.length > 2 && !t.includes('Trophy'));
+
+  const unique = [...new Set(names)].sort();
+
+  const output = unique.join('\n');
+
+  const box = document.createElement('textarea');
+  box.value = output;
+  box.style.width = '100%';
+  box.style.height = '80vh';
+
+  document.body.innerHTML = '';
+  document.body.appendChild(box);
+})();
