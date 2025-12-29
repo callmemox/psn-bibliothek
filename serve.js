@@ -4,6 +4,10 @@ const path = require('path');
 
 const port = process.env.PORT || 8000;
 const root = path.resolve(__dirname);
+const cheerio = require('cheerio');
+
+// Cache TTL for psnprofiles results (10 minutes)
+const CACHE_TTL = 10 * 60 * 1000;
 
 const mime = {
   '.html': 'text/html',
@@ -29,7 +33,7 @@ http.createServer(async (req, res) => {
 
     const cacheKey = `psn:${user}`;
     const cached = cache.get(cacheKey);
-    if (cached && (Date.now() - cached.ts) < 60_000) {
+    if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ user, games: cached.data }));
     }
@@ -43,34 +47,102 @@ http.createServer(async (req, res) => {
       }
       const html = await r.text();
 
-      // crude parsing: find links that reference /trophies/ or /game/ and capture the link text
-      const re = /<a[^>]+href=["']([^"']*(?:trophies|game)[^"']*)["'][^>]*>([^<]+)<\/a>/gi;
-      const names = [];
-      const hrefs = [];
-      let m;
-      while ((m = re.exec(html)) !== null) {
-        const href = m[1];
-        const name = m[2].trim();
-        if (name && !names.includes(name)) {
-          names.push(name);
-          hrefs.push(href);
+      // Use cheerio for robust parsing instead of fragile regex
+      const $ = cheerio.load(html);
+      const items = [];
+
+      // Find anchors that likely point to game/trophy pages and extract text + nearby image
+      $('a[href*="/trophies"], a[href*="/game"]').each((i, a) => {
+        const href = $(a).attr('href') || null;
+        const name = $(a).text().trim();
+        if (!name) return;
+
+        // try to find an image in the same card/container
+        let image = null;
+        const $a = $(a);
+        // search within the anchor first
+        image = $a.find('img').first().attr('src') || null;
+        if (!image) {
+          // search up to a few parent containers for an image
+          const parentImgs = $a.closest('li, .game, .card, .block').find('img');
+          if (parentImgs.length) image = $(parentImgs[0]).attr('src');
         }
-      }
 
-      // collect image sources on the page and try to map to found names by proximity/index
-      const imgRe = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-      const imgs = [];
-      let im;
-      while ((im = imgRe.exec(html)) !== null) {
-        imgs.push(im[1]);
-      }
+        // normalize relative URLs to absolute using target origin
+        if (image && image.startsWith('/')) {
+          const base = new URL(r.url || target).origin;
+          image = base + image;
+        }
 
-      // build objects with optional image
-      const items = names.map((n, idx) => ({ name: n, href: hrefs[idx] || null, image: imgs[idx] || null }));
+        // avoid duplicates by name
+        if (!items.find(it => it.name.toLowerCase() === name.toLowerCase())) {
+          items.push({ name, href, image });
+        }
+      });
+
+      // fallback: if no items found, try to extract any link texts as fallback
+      if (items.length === 0) {
+        $('a').each((i, a) => {
+          const name = $(a).text().trim();
+          if (name && name.length > 2 && !items.find(it => it.name === name)) {
+            items.push({ name, href: $(a).attr('href') || null, image: null });
+          }
+        });
+      }
 
       cache.set(cacheKey, { ts: Date.now(), data: items });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ user, games: items }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: err.message }));
+    }
+  }
+
+  // Accept raw HTML upload for parsing (useful when remote site blocks scraping)
+  if (url.pathname === '/api/psnprofiles/parse' && req.method === 'POST') {
+    try {
+      let body = '';
+      for await (const chunk of req) body += chunk;
+      let html = '';
+      try {
+        const parsed = JSON.parse(body);
+        html = parsed.html || '';
+      } catch (e) {
+        // not JSON, treat body as raw HTML
+        html = body;
+      }
+
+      if (!html) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'missing html body' }));
+      }
+
+      const $ = cheerio.load(html);
+      const items = [];
+      $('a[href*="/trophies"], a[href*="/game"]').each((i, a) => {
+        const href = $(a).attr('href') || null;
+        const name = $(a).text().trim();
+        if (!name) return;
+        let image = $(a).find('img').first().attr('src') || null;
+        if (!image) {
+          const parentImgs = $(a).closest('li, .game, .card, .block').find('img');
+          if (parentImgs.length) image = $(parentImgs[0]).attr('src');
+        }
+        items.push({ name, href, image });
+      });
+      if (items.length === 0) {
+        // fallback: collect meaningful link texts
+        $('a').each((i, a) => {
+          const name = $(a).text().trim();
+          if (name && name.length > 2 && !items.find(it => it.name === name)) {
+            items.push({ name, href: $(a).attr('href') || null, image: null });
+          }
+        });
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ games: items }));
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: err.message }));

@@ -62,6 +62,56 @@ function clearSuggestions(){
 }
 
 function selectSuggestion(name){
+
+// File-upload import (for saved HTML files)
+const importFileEl = document.getElementById('importFile');
+const importBtnEl = document.getElementById('importBtn');
+if (importBtnEl && importFileEl) {
+  importBtnEl.addEventListener('click', async () => {
+    const file = importFileEl.files && importFileEl.files[0];
+    if (!file) { alert('Bitte eine gespeicherte HTML-Datei wählen.'); return; }
+    importBtnEl.disabled = true;
+    importBtnEl.textContent = 'Importiere...';
+    try {
+      const text = await file.text();
+      const r = await fetch('/api/psnprofiles/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html: text })
+      });
+      const data = await r.json();
+      if (!r.ok) { alert('Parse fehlgeschlagen: ' + (data.error || r.status)); return; }
+      const found = data.games || [];
+      if (found.length === 0) { alert('Keine Spiele gefunden.'); }
+      let added = 0;
+      for (const item of found) {
+        const gname = (typeof item === 'string') ? item : (item.name || '');
+        if (!gname) continue;
+        if (games.some(x => x.name && x.name.toLowerCase() === gname.toLowerCase())) continue;
+        const game = { name: gname, platform: 'PSN', status: 'Importiert', score: '0.00', image: (item.image || null) };
+        // try catalog for better image
+        try {
+          if (typeof gamesCatalog === 'object' && Array.isArray(gamesCatalog)) {
+            const match = gamesCatalog.find(c => c.name && c.name.toLowerCase() === gname.toLowerCase());
+            if (match && match.image) game.image = match.image;
+          }
+        } catch (e) {}
+        games.push(game);
+        added++;
+      }
+      if (added > 0) {
+        localStorage.setItem('games', JSON.stringify(games));
+        render();
+      }
+      alert(`Import abgeschlossen. ${found.length} Spiele gefunden, ${added} hinzugefügt.`);
+    } catch (err) {
+      alert('Fehler beim Import: ' + err.message);
+    } finally {
+      importBtnEl.disabled = false;
+      importBtnEl.textContent = '📥 Importieren';
+    }
+  });
+}
   if(gameNameInput) gameNameInput.value = name;
   clearSuggestions();
 }
